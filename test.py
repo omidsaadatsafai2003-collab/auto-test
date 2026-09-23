@@ -1,12 +1,13 @@
 import asyncio
 from playwright.async_api import async_playwright
 
-SITE_URL = "https://koalafaucet.com/doge-claim"
+SITE_URL = "https://koalafaucet.com/doge"
 EMAILS = [
-    "Omidsaadatsafai2012@gmail.com",
-    "Omidsaadatsafai2003@gmail.com",
-    "Omidsaadatsafai2001@gmail.com",
+    "omidsaadatsafai2012@gmail.com",
 ]
+
+WAIT_AFTER_FIRST_CLICK = 17   # چند ثانیه صبر بعد از CLAIM FREE DOGE
+WAIT_AFTER_SECOND_CLICK = 3   # چند ثانیه صبر بعد از CLAIM NOW
 
 async def do_email(browser, email):
     context = await browser.new_context()
@@ -15,15 +16,27 @@ async def do_email(browser, email):
     print(f"→ ایمیل: {email}")
     await page.goto(SITE_URL, wait_until="domcontentloaded")
 
-    await page.click("button")
+    # ۱. کلیک روی CLAIM FREE DOGE
+    print("   کلیک روی CLAIM FREE DOGE...")
+    await page.click("text=CLAIM FREE DOGE")
+    await asyncio.sleep(WAIT_AFTER_FIRST_CLICK)
+
+    # ۲. کلیک روی CLAIM NOW (بعد از تایمر)
+    print("   کلیک روی CLAIM NOW...")
+    await page.click("text=CLAIM NOW", timeout=30000)
+    await asyncio.sleep(WAIT_AFTER_SECOND_CLICK)
+
+    # ۳. وارد کردن ایمیل
+    print(f"   وارد کردن ایمیل: {email}")
+    await page.fill("input[type='email']", email)
+    await asyncio.sleep(1)
+
+    # ۴. کلیک روی Send DOGE
+    print("   کلیک روی Send DOGE...")
+    await page.click("text=Send DOGE")
     await asyncio.sleep(3)
 
-    await page.fill("input", email)
-    await asyncio.sleep(2)
-
-    await page.click("button")
-    print(f"✔ {email} انجام شد")
-
+    print(f"✔ {email} — انجام شد")
     await context.close()
 
 async def main():
