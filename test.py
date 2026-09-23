@@ -1,46 +1,32 @@
 import asyncio
 from playwright.async_api import async_playwright
 
-SITE_URL = "https://koalafaucet.com/doge"
-EMAILS = [
-    "omidsaadatsafai2012@gmail.com",
-]
-
-async def do_email(browser, email):
-    context = await browser.new_context(
-        user_agent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36"
-    )
-    page = await context.new_page()
-
-    print(f"→ ایمیل: {email}")
-    await page.goto(SITE_URL, wait_until="domcontentloaded")
-    await asyncio.sleep(5)
-
-    # عکس از صفحه بگیر
-    await page.screenshot(path="debug.png", full_page=True)
-    print("   عکس صفحه گرفته شد → debug.png")
-
-    # محتوای صفحه رو چاپ کن
-    content = await page.content()
-    print("   طول محتوا:", len(content))
-    print("   بخش اول محتوا:", content[:500])
-
-    # ببین دکمه‌ها چی هستن
-    buttons = await page.locator("button").all()
-    print(f"   تعداد دکمه‌ها: {len(buttons)}")
-    for i, btn in enumerate(buttons):
-        try:
-            text = await btn.inner_text()
-            print(f"   دکمه {i}: '{text}'")
-        except:
-            pass
-
-    await context.close()
+async def test_site(browser, url, name):
+    page = await browser.new_page()
+    try:
+        await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        await asyncio.sleep(3)
+        content = await page.content()
+        print(f"[{name}] {url}")
+        print(f"   طول محتوا: {len(content)}")
+        print(f"   عنوان: {await page.title()}")
+        
+        # چاپ ۲۰۰ کاراکتر وسط صفحه
+        print(f"   نمونه متن: {content[500:800]}")
+        print()
+    except Exception as e:
+        print(f"[{name}] خطا: {e}")
+    await page.close()
 
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        await asyncio.gather(*[do_email(browser, e) for e in EMAILS])
+        
+        # تست چند سایت مختلف
+        await test_site(browser, "https://example.com", "سایت ساده")
+        await test_site(browser, "https://koalafaucet.com/doge", "koalafaucet")
+        await test_site(browser, "https://httpbin.org/html", "httpbin")
+        
         await browser.close()
 
 asyncio.run(main())
