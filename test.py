@@ -6,37 +6,35 @@ EMAILS = [
     "omidsaadatsafai2012@gmail.com",
 ]
 
-WAIT_AFTER_FIRST_CLICK = 17   # چند ثانیه صبر بعد از CLAIM FREE DOGE
-WAIT_AFTER_SECOND_CLICK = 3   # چند ثانیه صبر بعد از CLAIM NOW
-
 async def do_email(browser, email):
-    context = await browser.new_context()
+    context = await browser.new_context(
+        user_agent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36"
+    )
     page = await context.new_page()
 
     print(f"→ ایمیل: {email}")
     await page.goto(SITE_URL, wait_until="domcontentloaded")
+    await asyncio.sleep(5)
 
-    # ۱. کلیک روی CLAIM FREE DOGE
-    print("   کلیک روی CLAIM FREE DOGE...")
-    await page.click("text=CLAIM FREE DOGE")
-    await asyncio.sleep(WAIT_AFTER_FIRST_CLICK)
+    # عکس از صفحه بگیر
+    await page.screenshot(path="debug.png", full_page=True)
+    print("   عکس صفحه گرفته شد → debug.png")
 
-    # ۲. کلیک روی CLAIM NOW (بعد از تایمر)
-    print("   کلیک روی CLAIM NOW...")
-    await page.click("text=CLAIM NOW", timeout=30000)
-    await asyncio.sleep(WAIT_AFTER_SECOND_CLICK)
+    # محتوای صفحه رو چاپ کن
+    content = await page.content()
+    print("   طول محتوا:", len(content))
+    print("   بخش اول محتوا:", content[:500])
 
-    # ۳. وارد کردن ایمیل
-    print(f"   وارد کردن ایمیل: {email}")
-    await page.fill("input[type='email']", email)
-    await asyncio.sleep(1)
+    # ببین دکمه‌ها چی هستن
+    buttons = await page.locator("button").all()
+    print(f"   تعداد دکمه‌ها: {len(buttons)}")
+    for i, btn in enumerate(buttons):
+        try:
+            text = await btn.inner_text()
+            print(f"   دکمه {i}: '{text}'")
+        except:
+            pass
 
-    # ۴. کلیک روی Send DOGE
-    print("   کلیک روی Send DOGE...")
-    await page.click("text=Send DOGE")
-    await asyncio.sleep(3)
-
-    print(f"✔ {email} — انجام شد")
     await context.close()
 
 async def main():
